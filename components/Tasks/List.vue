@@ -15,12 +15,12 @@ const { toggleTaskCompletion } = useTasks();
 
 <template>
   <div class="max-w-7xl mx-auto flex flex-col gap-4">
-    <Card v-for="task in tasks" :key="task.$id">
-      <NuxtLink :to="`/tasks/${task.$id}`">
+    <Card v-for="task in tasks" :key="task.$id" @click="navigateTo(`/tasks/${task.$id}`)">
+     
         <CardHeader>
           <CardTitle class="flex justify-between items-center">
             <div>
-              <Checkbox :checked="task.completed" @update:checked="() => toggleTaskCompletion(task)" />
+              <Checkbox :checked="task.completed" @update:checked="() => toggleTaskCompletion(task)" class="mr-2" @click="(e:Event) => e.stopPropagation()"/>
               {{ task.title }}
             </div>
             <div>
@@ -32,7 +32,7 @@ const { toggleTaskCompletion } = useTasks();
           <div>status: {{ task.status }}</div>
           <div>assigned to: {{ task.assigned_to }}</div>
         </CardContent>
-      </NuxtLink>
+      
     </Card>
   </div>
 </template>

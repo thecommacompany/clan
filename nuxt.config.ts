@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@pinia/nuxt",
     "nuxt-appwrite",
+    "@vite-pwa/nuxt",
   ],
   shadcn: {
     /**
@@ -46,6 +47,50 @@ export default defineNuxtConfig({
       financesCollectionId: "",
 
     },
+  },
+  pwa: {
+    registerType: "autoUpdate",
+    manifest: {
+      name: "Comma Clan",
+      short_name: "Comma Clan",
+      start_url: "/",
+      description: "Comma Clan is a project management tool that allows you to manage tasks, projects, and finances.",
+      display: "standalone",
+      orientation: "portrait",
+      theme_color: "#120e4b",
+      icons: [
+        {
+          src: "img/pwa-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          src: "img/pwa-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
+        {
+          src: "img/maskable-icon-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+          purpose: "any maskable",
+        },
+      ],
+    },
+    workbox: {
+      navigateFallback: "/",
+      globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+    },
+    client: {
+      installPrompt: true,
+    },
+    devOptions: {
+      enabled: true,
+      suppressWarnings: true,
+      navigateFallbackAllowlist: [/^\/$/],
+      type: "module",
+    },
+
   },
   devtools: { enabled: true },
 });

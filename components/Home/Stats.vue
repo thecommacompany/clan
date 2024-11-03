@@ -25,21 +25,21 @@ const stats = [
     value: totalIncome,
     change: "+20.1%",
     icon: "ri:money-rupee-circle-fill",
-    link: "#",
+    link: "finances",
   },
   {
     title: "Active Projects",
     value: "2",
     change: "+0.1%",
     icon: "ri:folder-3-fill",
-    link: "#",
+    link: "projects",
   },
   {
     title: "Due This Week",
     value: "10",
     change: "-10.1%",
     icon: "ri:sticky-note-fill",
-    link: "#",
+    link: "tasks",
   },
   // {
   //   title: "Clients",
@@ -75,6 +75,11 @@ onMounted(async () => {
             {{ stat.change }} from last month
           </p>
         </CardContent>
+        <CardFooter>
+          <NuxtLink :to="stat.link" class="text-blue-500 hover:text-blue-600 flex items-center justify-center">
+            View <Icon name="ri:arrow-right-s-line" class="text-xl" />
+          </NuxtLink>
+        </CardFooter>
       </Card>
     </div>
   </div>

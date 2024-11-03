@@ -1,17 +1,19 @@
-
-
-export interface Transaction {
-  $id: string
-  title: string
-  amount: number
-  description: string
-  type: 'internal' | 'external'
-  users: string[]
-  debit_credit: 'debit' | 'credit'
-  project: string
+import type { Transaction } from '@/types/finance'  
+import type {Models} from "appwrite"
+import { useFinanceStore } from '@/stores/finance'
+function parseTransaction(transaction: Models.Document): Transaction {
+  return {
+    $id: transaction.$id,
+    title: transaction.title,
+    amount: transaction.amount,
+    description: transaction.description,
+    type: transaction.type,
+    user: transaction.user,
+    debit_credit: transaction.debit_credit,
+    project: transaction.project
+  }
 }
-
-export function useFinanceDatabase() {
+export const useFinanceDatabase = () => {
   const config = useRuntimeConfig()
   const { database } = useAppwrite()
 
@@ -20,8 +22,10 @@ export function useFinanceDatabase() {
       const response = await database.listDocuments(
         config.public.databaseId,
         config.public.financesCollectionId
-      )
-      return response.documents as Transaction[]
+      ) as Models.DocumentList<Models.Document>
+      const transactions = response.documents.map(parseTransaction)
+      useFinanceStore().setTransactions(transactions)
+      return transactions
     } catch (error) {
       console.error('Failed to fetch transactions:', error)
       throw error
@@ -35,8 +39,9 @@ export function useFinanceDatabase() {
         config.public.financesCollectionId,
         'unique()',
         transaction
-      )
-      return response as Transaction
+      ) as Models.Document
+      const transactionData = parseTransaction(response)
+      return transactionData
     } catch (error) {
       console.error('Failed to add transaction:', error)
       throw error
@@ -50,8 +55,9 @@ export function useFinanceDatabase() {
         config.public.financesCollectionId,
         id,
         transaction
-      )
-      return response as Transaction
+      ) as Models.Document
+      const transactionData = parseTransaction(response)
+      return transactionData
     } catch (error) {
       console.error('Failed to update transaction:', error)
       throw error

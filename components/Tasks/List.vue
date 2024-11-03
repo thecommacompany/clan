@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTaskStore } from "@/stores/tasks";
 import { useTasks } from "@/composables/useTasks";
-import type { Task } from "@/stores/tasks";
+import type { Task } from "@/types/task";
 
 const props = defineProps({
   tasks: {

@@ -16,6 +16,6 @@ export interface Project {
     totalTasks: number;
     completedTasks: number;
     progress: number;
-  };
+  }|undefined;
 }
 export type Projects = Project[];

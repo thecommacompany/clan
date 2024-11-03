@@ -3,8 +3,41 @@ import type { Project } from "@/types/project";
 import type { Task } from "@/types/task";
 import { useQuery } from "@tanstack/vue-query";
 import { useProjectStore } from "@/stores/project";
-import { useTaskStore } from "@/stores/task";
-import { useAppwrite } from '#imports'
+import { useTaskStore } from "@/stores/tasks";
+import type {Models} from "appwrite"
+
+
+function parseTask(task: Models.Document): Task {
+  return {
+    $id: task.$id,
+    title: task.title,
+    status: task.status,
+    priority: task.priority,
+    parent_task_id: task.parent_task_id,
+    assigned_to: task.assigned_to,
+    completed: task.completed,
+    project: task.project,
+    due_date: task.due_date // Add due_date field
+  }
+}
+function parseProject(project: Models.Document): Project {
+  return {
+    $id: project.$id,
+    $collectionId: project.$collectionId,
+    $databaseId: project.$databaseId,
+    $createdAt: project.$createdAt,
+    $updatedAt: project.$updatedAt,
+    $permissions: project.$permissions,
+    title: project.title,
+    category: project.category,
+    description: project.description,
+    due_date: project.due_date,
+    start_date: project.start_date,
+    Budget: project.Budget,
+    status: project.status,
+    stats: project.stats
+  }
+}
 
 export const useProject = (projectId: string) => {
   const config = useRuntimeConfig();
@@ -17,8 +50,10 @@ export const useProject = (projectId: string) => {
       config.public.databaseId,
       config.public.tasksCollectionId,
       [Query.equal("project", projectId)],
-    );
-    return response.documents as Task[];
+    ) as Models.DocumentList<Models.Document>;
+    const tasks = response.documents.map(parseTask);
+    projectStore.setProjectTasks(tasks);
+    return tasks;
   };
 
   const calculateProjectStats = (tasks: Task[]) => {
@@ -42,12 +77,13 @@ export const useProject = (projectId: string) => {
           config.public.databaseId,
           config.public.projectsCollectionId,
           projectId,
-        );
+        ) as Models.Document;
+        const parsedProject = parseProject(response);
 
         const tasks = await fetchProjectTasks(projectId);
         const stats = calculateProjectStats(tasks);
         const projectData: Project = {
-          ...response,
+          ...parsedProject,
           stats: stats,
         };
 

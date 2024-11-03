@@ -26,9 +26,13 @@ const openEditDialog = () => {
       category: projectStore.project.category,
       description: projectStore.project.description,
       Budget: projectStore.project.Budget,
-      start_date: projectStore.project.start_date,
-      due_date: projectStore.project.due_date
+      start_date: "",
+      due_date: ""
     };
+    const formattedDate = new Date(projectStore.project.start_date).toISOString().split("T")[0]
+    editedProject.value.start_date = formattedDate;
+    const formattedDate2 = new Date(projectStore.project.due_date).toISOString().split("T")[0]
+    editedProject.value.due_date = formattedDate2;
   }
   isEditDialogOpen.value = true;
 };
@@ -37,12 +41,7 @@ const handleUpdateProject = async () => {
   if (!editedProject.value || !projectStore.project) return;
   try {
     // Create an object with only the changed fields
-    const updatedFields = Object.entries(editedProject.value).reduce((acc, [key, value]) => {
-      if (value !== projectStore.project![key as keyof Project]) {
-        acc[key as keyof Project] = value;
-      }
-      return acc;
-    }, {} as Partial<Project>);
+    const updatedFields = editedProject.value
 
     if (Object.keys(updatedFields).length === 0) {
       // No changes were made
@@ -145,7 +144,7 @@ const handleDeleteProject = async () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div class="p-3 my-2">
+                <div class="p-3 my-2" v-if="projectStore.project && projectStore.project.stats">
                   <div class="flex items-center justify-between gap-2">
                     <Progress v-model="projectStore.project.stats.progress" />
                     <div>{{ projectStore.project.stats.progress }}%</div>
@@ -157,7 +156,7 @@ const handleDeleteProject = async () => {
                 </div>
 
                 <div>
-                  <TasksList :tasks="projectStore.project.tasks" />
+                  <TasksList :tasks="projectStore.projectTasks" />
                 </div>
               </TabsContent>
             </Tabs>

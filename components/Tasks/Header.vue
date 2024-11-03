@@ -1,23 +1,36 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useTasks } from "@/composables/useTasks";
-import type { Task } from "@/stores/tasks";
+import type {Task} from "@/types/task";
+import type {User} from "@/types/user";
+import UserSelector from "@/components/Tasks/UserSelector.vue";
+
 
 const taskStatus = ref("pending");
 const taskShow = ref("all");
 const isDialogOpen = ref(false);
+let selectedUsers = ref<User[]>([]);
 const newTask = ref<Partial<Task>>({
   title: "",
   status: "todo",
   priority: "medium",
   assigned_to: [],
   completed: false,
+  due_date: "",
+  project:""
 });
 
 const { addTask } = useTasks();
 
 const handleAddTask = async () => {
-  await addTask(newTask.value);
+if (!newTask.value.assigned_to) {
+    newTask.value.assigned_to = [];
+}
+selectedUsers.value.forEach((user) => {
+    newTask.value.assigned_to!.push(user.$id);
+  });
+
+await addTask(newTask.value);
   isDialogOpen.value = false;
   newTask.value = {
     title: "",
@@ -25,7 +38,18 @@ const handleAddTask = async () => {
     priority: "medium",
     assigned_to: [],
     completed: false,
+    due_date: "",
+    project: "",
   };
+};
+
+const formatDate = (date: string | null) => {
+  if (!date) return null;
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 </script>
 
@@ -33,7 +57,7 @@ const handleAddTask = async () => {
   <div class="p-4">
     <div class="flex justify-between w-full">
       <h1 class="text-2xl font-bold">Tasks</h1>
-      <Dialog>
+      <Dialog v-model:open="isDialogOpen">
         <DialogTrigger as-child>
           <Button> Add Task </Button>
         </DialogTrigger>
@@ -78,7 +102,11 @@ const handleAddTask = async () => {
             </div>
             <div>
               <Label for="assigned_to">Assigned To</Label>
-              <Input id="assigned_to" v-model="newTask.assigned_to" />
+<UserSelector v-model="selectedUsers" />
+            </div>
+            <div>
+              <Label for="due_date">Due Date</Label>
+              <Input id="due_date" type="date" v-model="newTask.due_date" />
             </div>
             <DialogFooter>
               <Button type="submit">Add Task</Button>

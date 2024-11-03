@@ -1,7 +1,23 @@
 import { useQuery } from '@tanstack/vue-query'
 import { useTaskStore } from '@/stores/tasks'
 import { useAppwrite } from '#imports'
-import type { Task } from '@/stores/tasks'
+import type { Task } from '@/types/task'
+import type { Models  } from 'appwrite'
+
+// function parse task 
+function parseTask(task: Models.Document): Task {
+  return {
+    $id: task.$id,
+    title: task.title,
+    status: task.status,
+    priority: task.priority,
+    parent_task_id: task.parent_task_id,
+    assigned_to: task.assigned_to,
+    completed: task.completed,
+    project: task.project,
+    due_date: task.due_date // Add due_date field
+  }
+}
 
 export const useTasks = () => {
   const config = useRuntimeConfig()
@@ -15,10 +31,10 @@ export const useTasks = () => {
         const response = await database.listDocuments(
           config.public.databaseId,
           config.public.tasksCollectionId
-        )
+        ) as Models.DocumentList<Models.Document>
 
-        const tasks = response.documents as Task[]
-        taskStore.setTasks(tasks)
+        const tasks = response.documents.map(parseTask)
+        taskStore.setTasks(tasks as Task[])
         return tasks
       } catch (error) {
         throw createError({
@@ -35,8 +51,9 @@ export const useTasks = () => {
         config.public.databaseId,
         config.public.tasksCollectionId,
         taskId
-      )
-      return response as Task
+      ) as Models.Document
+      taskStore.setTask(parseTask(response))
+      return true
     } catch (error) {
       console.error('Failed to fetch task:', error)
       throw error
@@ -46,19 +63,21 @@ export const useTasks = () => {
   const updateTask = async (taskId: string, updatedData: Partial<Task>) => {
     try {
       // Only include fields that are present in the Task interface
-      const allowedFields: (keyof Task)[] = ['title', 'status', 'priority', 'parent_task_id', 'assigned_to', 'completed']
+      const allowedFields: (keyof Task)[] = ['title', 'status', 'priority', 'parent_task_id', 'assigned_to', 'completed', 'due_date']
       const filteredData = Object.fromEntries(
         Object.entries(updatedData).filter(([key]) => allowedFields.includes(key as keyof Task))
-      )
+      ) as Partial<Task>
 
       const updatedTask = await database.updateDocument(
         config.public.databaseId,
         config.public.tasksCollectionId,
         taskId,
         filteredData
-      )
-      taskStore.updateTask(updatedTask as Task)
-      return updatedTask as Task
+      ) as Models.Document
+      
+      taskStore.updateTasks(parseTask(updatedTask))
+      taskStore.setTask(parseTask(updatedTask))
+      return true
     } catch (error) {
       console.error('Failed to update task:', error)
       throw error
@@ -73,6 +92,7 @@ export const useTasks = () => {
         taskId
       )
       taskStore.removeTask(taskId)
+      return true
     } catch (error) {
       console.error('Failed to delete task:', error)
       throw error
@@ -80,7 +100,8 @@ export const useTasks = () => {
   }
 
   const toggleTaskCompletion = async (task: Task) => {
-    return updateTask(task.$id, { completed: !task.completed })
+    updateTask(task.$id, { completed: !task.completed })
+    return true
   }
 
   const addTask = async (newTaskData: Partial<Task>) => {
@@ -90,8 +111,8 @@ export const useTasks = () => {
         config.public.tasksCollectionId,
         'unique()',
         newTaskData
-      )
-      const newTask = response as Task
+      ) as Models.Document
+      const newTask = parseTask(response)
       taskStore.addTask(newTask)
       return newTask
     } catch (error) {

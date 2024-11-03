@@ -18,12 +18,12 @@ const { isPending, isError, error } = useProjects();
     
     <template v-else>
       <ProjectsHeader />
-      <div class="p-3">
+      <div class="p-3 flex flex-wrap gap-4">
         <ProjectsProject
           v-for="project in projectStore.projects"
           :key="project.$id"
           :project="project"
-          class="max-w-sm"
+          class="max-w-sm w-full"
         />
       </div>
     </template>

@@ -1,16 +1,18 @@
 import { defineStore, acceptHMRUpdate } from "pinia";
 
 import type { Project, Projects } from "@/types/project";
-
+import type { Task } from "@/types/task";
 interface ProjectState {
   projects: Projects;
   project: Project | null;
+  projectTasks: Task[];
 }
 
 export const useProjectStore = defineStore("project", {
   state: (): ProjectState => ({
     projects: [],
-    project: null
+    project: null,
+    projectTasks: []
   }),
   actions: {
     setProjects(projects: Projects) {
@@ -18,6 +20,9 @@ export const useProjectStore = defineStore("project", {
     },
     setProject(project: Project) {
       this.project = project;
+    },
+    setProjectTasks(tasks: Task[]) {
+      this.projectTasks = tasks;
     },
     clearProject() {
       this.project = null;

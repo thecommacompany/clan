@@ -1,8 +1,28 @@
 <script setup lang="ts">
+import { useFinanceStore } from "@/stores/finance";
+const financeStore = useFinanceStore();
+
+const { fetchTransactions} = useFinanceDatabase();
+// Computed properties for analytics
+const totalExpense = computed(() => {
+  return financeStore.transactions
+    .filter(t => t.debit_credit === 'debit')
+    .reduce((sum, t) => sum + t.amount, 0)
+})
+
+const totalIncome = computed(() => {
+  return financeStore.transactions
+    .filter(t => t.debit_credit === 'credit')
+    .reduce((sum, t) => sum + t.amount, 0)
+})
+
+const currentBalance = computed(() => {
+  return totalIncome.value - totalExpense.value
+})
 const stats = [
   {
     title: "Total Revenue",
-    value: "$45,231.89",
+    value: totalIncome,
     change: "+20.1%",
     icon: "ri:money-rupee-circle-fill",
     link: "#",
@@ -21,13 +41,13 @@ const stats = [
     icon: "ri:sticky-note-fill",
     link: "#",
   },
-  {
-    title: "Clients",
-    value: "20",
-    change: "-10.1%",
-    icon: "ri:group-3-fill",
-    link: "#",
-  },
+  // {
+  //   title: "Clients",
+  //   value: "20",
+  //   change: "-10.1%",
+  //   icon: "ri:group-3-fill",
+  //   link: "#",
+  // },
   {
     title: "My Earnings",
     value: "20",
@@ -36,6 +56,9 @@ const stats = [
     link: "#",
   },
 ];
+onMounted(async () => {
+  await fetchTransactions()
+})
 </script>
 
 <template>

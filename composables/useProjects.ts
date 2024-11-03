@@ -2,7 +2,31 @@
 import { useQuery } from '@tanstack/vue-query'
 import { useProjectStore } from '@/stores/project'
 import { useAppwrite } from '#imports'
-import type { Projects } from '@/types/project'
+import type { Projects, Project } from '@/types/project'
+import type { Models } from 'appwrite'
+// function parse project
+function parseProject(project: Models.Document): Project {
+  return {
+    $id: project.$id,
+    title: project.title,
+    description: project.description,
+    $createdAt: project.$createdAt,
+    $updatedAt: project.$updatedAt,
+    $collectionId: project.$collectionId,
+    $databaseId: project.$databaseId,
+    $permissions: project.$permissions,
+    category: project.category,
+    status: project.status,
+    due_date: project.due_date,
+    start_date: project.start_date,
+    Budget: project.budget,
+    stats: {
+      totalTasks: 0,
+      completedTasks: 0,
+      progress: 0
+    }
+  }
+}
 
 export const useProjects = () => {
   const config = useRuntimeConfig()
@@ -10,11 +34,12 @@ export const useProjects = () => {
   const projectStore = useProjectStore()
 
   const fetchProjectTasks = async (projectId: string) => {
-    return await database.listDocuments(
+    const response = await database.listDocuments(
       config.public.databaseId,
       config.public.tasksCollectionId,
       [Query.equal('project', projectId)]
-    )
+    ) as Models.DocumentList<Models.Document>
+    return response.documents
   }
 
   const calculateProjectStats = (tasks: any[]) => {
@@ -35,14 +60,15 @@ export const useProjects = () => {
         const response = await database.listDocuments(
           config.public.databaseId,
           config.public.projectsCollectionId
-        )
+        ) as Models.DocumentList<Models.Document>
 
         const projectsWithStats = await Promise.all(
           response.documents.map(async (project) => {
-            const taskResponse = await fetchProjectTasks(project.$id)
+            const taskResponse = await fetchProjectTasks(project.$id) as Models.Document[]
+            console.log(taskResponse)
             return {
               ...project,
-              stats: calculateProjectStats(taskResponse.documents)
+              stats: calculateProjectStats(taskResponse)
             }
           })
         ) as Projects
@@ -69,15 +95,15 @@ export const useProjects = () => {
         config.public.projectsCollectionId,
         'unique()',
         newProjectData
-      );
+      ) as Models.Document;
 
-      const newProject = response as Project;
-      newProject.stats = { totalTasks: 0, completedTasks: 0, progress: 0 };
-      
+      const newProject = parseProject(response)
+      newProject.stats = { totalTasks: 0, completedTasks: 0, progress: 0 }
+
       // Use the new addProject action from the store
-      projectStore.addProject(newProject);
-      
-      return newProject;
+      projectStore.addProject(newProject)
+
+      return newProject
     } catch (error) {
       console.error('Failed to add project:', error);
       throw error;

@@ -1,27 +1,29 @@
 import { defineStore, acceptHMRUpdate } from "pinia";
+import type { Task } from "@/types/task";
 
-export interface Task {
-  $id: string;
-  title: string;
-  status: string;
-  priority: string;
-  parent_task_id: string | null;
-  assigned_to: string[];
-  completed: boolean;
+
+function formatDate(date: string) {
+  return new Date(date).toISOString().split("T")[0];
 }
+
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
     tasks: [] as Task[],
+    task: null as Task | null
   }),
   actions: {
     setTasks(tasks: Task[]) {
       this.tasks = tasks;
     },
+    setTask(task: Task) {
+      const fromattedTask = {...task, due_date: formatDate(task.due_date)}
+      this.task = fromattedTask;
+    },
     clearTasks() {
       this.tasks = [];
     },
-    updateTask(updatedTask: Task) {
+    updateTasks(updatedTask: Task) {
       const index = this.tasks.findIndex(task => task.$id === updatedTask.$id);
       if (index !== -1) {
         this.tasks[index] = updatedTask;
@@ -36,6 +38,7 @@ export const useTaskStore = defineStore("task", {
   },
   getters: {
     getTasks: (state) => state.tasks,
+    getTask: (state) => state.task
   },
 });
 

@@ -15,12 +15,13 @@ async function logout() {
 <template>
   <div class="sticky top-0 z-10">
     <header class="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 ">
-      <nav
-        class="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        <NuxtLink to="/" class="flex items-center gap-2 text-lg font-semibold md:text-base">
-          <span class="text-primary">Comma</span>
+ <NuxtLink to="/" class="flex items-center gap-2 text-lg font-semibold md:text-base px-2">
+          <span class="text-primary flex gap-2 items-center justify-center"> <img src="/img/logo_dark.png" alt="Comma Clan" class="w-10 md:w-8" /> <span class="hidden md:block">Comma</span></span>
           <span class="sr-only">Comma Clan</span>
         </NuxtLink>
+      <nav
+        class="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+       
         <NuxtLink to="/" class="text-foreground transition-colors hover:text-foreground">
           Dashboard
         </NuxtLink>
@@ -58,9 +59,7 @@ async function logout() {
             <NuxtLink to="/finances" class="text-muted-foreground hover:text-foreground">
               Finances
             </NuxtLink>
-            <NuxtLink to="#" class="text-muted-foreground hover:text-foreground">
-              Analytics
-            </NuxtLink>
+        
           </nav>
         </SheetContent>
       </Sheet>

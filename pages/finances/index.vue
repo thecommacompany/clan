@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useFinanceStore } from '~/stores/finance'
-import { useFinanceDatabase } from '~/composables/useFinanceDatabase'
-import { useProjectStore } from '~/stores/project'
-import { useProjects } from '~/composables/useProjects'
-import { useUserStore } from '~/stores/user'
-import { useUserDatabase } from '~/composables/useUserDatabase'
-
+import { useFinanceStore } from '@/stores/finance'
+import { useFinanceDatabase } from '@/composables/useFinanceDatabase'
+import { useProjectStore } from '@/stores/project'
+import { useProjects } from '@/composables/useProjects'
+import { useUserStore } from '@/stores/user'
+import { useUserDatabase } from '@/composables/useUserDatabase'
+import type { Transaction } from '@/types/finance'
 const financeStore = useFinanceStore()
 const projectStore = useProjectStore()
 const userStore = useUserStore()
@@ -52,7 +52,7 @@ const handleFetchTransactions = async () => {
   financeStore.setError(null)
   try {
     const transactions = await fetchTransactions()
-    financeStore.setTransactions(transactions)
+    financeStore.setTransactions(transactions as Transaction[])
   } catch (error) {
     financeStore.setError('Failed to fetch transactions')
     console.error(error)

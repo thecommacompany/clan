@@ -3,7 +3,10 @@ import { useProjectStore } from "@/stores/project";
 import { useProject } from "@/composables/useProject";
 import { useRouter } from "vue-router";
 import type { Project } from "@/types/project";
-
+import { useTasks } from "@/composables/useTasks";
+import type { Task } from "@/types/task";
+import type { User } from "@/types/user";
+import UserSelector from "@/components/Tasks/UserSelector.vue";
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
@@ -70,6 +73,45 @@ const handleDeleteProject = async () => {
     }
   }
 };
+
+// add task to project
+const isAddTaskDialogOpen = ref(false);
+const selectedUsers = ref<User[]>([]);
+const newTask = ref<Partial<Task>>({
+  title: "",
+  status: "todo",
+  priority: "medium",
+  assigned_to: [],
+  completed: false,
+  due_date: "",
+  project: route.params.id as string // Pre-fill with current project ID
+});
+
+const { addTask } = useTasks();
+
+const handleAddTask = async () => {
+  if (!newTask.value.assigned_to) {
+    newTask.value.assigned_to = [];
+  }
+  selectedUsers.value.forEach((user) => {
+    newTask.value.assigned_to!.push(user.$id);
+  });
+
+  await addTask(newTask.value);
+  isAddTaskDialogOpen.value = false;
+  // Reset form
+  newTask.value = {
+    title: "",
+    status: "todo",
+    priority: "medium",
+    assigned_to: [],
+    completed: false,
+    due_date: "",
+    project: route.params.id as string
+  };
+  selectedUsers.value = [];
+  await refetch(); // Refresh the project data to show new task
+};
 </script>
 
 <template>
@@ -131,7 +173,11 @@ const handleDeleteProject = async () => {
               <TabsContent value="tasks">
                 <div class="flex items-center justify-between space-y-2">
                   <div class="text-lg font-bold">Project Tasks</div>
-                  <Select v-model="taskShow">
+                  <div class="flex items-center gap-2">
+                    <div>
+                      <Button @click="isAddTaskDialogOpen = true" class="bg-blue-500 hover:bg-blue-600"> + Add Task </Button>
+                    </div>
+                    <Select v-model="taskShow">
                     <SelectTrigger class="w-20">
                       <SelectValue placeholder="Select task" />
                     </SelectTrigger>
@@ -143,11 +189,13 @@ const handleDeleteProject = async () => {
                       </SelectGroup>
                     </SelectContent>
                   </Select>
+                    </div>
+
                 </div>
                 <div class="p-3 my-2" v-if="projectStore.project && projectStore.project.stats">
                   <div class="flex items-center justify-between gap-2">
                     <Progress v-model="projectStore.project.stats.progress" />
-                    <div>{{ projectStore.project.stats.progress }}%</div>
+                    <div>{{ projectStore.project.stats.progress.toFixed(0) }}%</div>
                   </div>
                   <p>
                     {{ projectStore.project.stats.completedTasks }} /
@@ -166,7 +214,61 @@ const handleDeleteProject = async () => {
         </Card>
       </template>
     </div>
-
+<!-- Add Task Dialog -->
+<Dialog v-model:open="isAddTaskDialogOpen">
+  <DialogContent class="sm:max-w-[425px]">
+    <DialogHeader>
+      <DialogTitle>Add Task</DialogTitle>
+      <DialogDescription>
+        Add a new task to your project.
+      </DialogDescription>
+    </DialogHeader>
+    
+    <form @submit.prevent="handleAddTask" class="space-y-4">
+      <div>
+        <Label for="title">Title</Label>
+        <Input id="title" v-model="newTask.title" required />
+      </div>
+      <div>
+        <Label for="status">Status</Label>
+        <Select v-model="newTask.status">
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todo">To Do</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="done">Done</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label for="priority">Priority</Label>
+        <Select v-model="newTask.priority">
+          <SelectTrigger>
+            <SelectValue placeholder="Select priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <Label for="assigned_to">Assigned To</Label>
+        <UserSelector v-model="selectedUsers" />
+      </div>
+      <div>
+        <Label for="due_date">Due Date</Label>
+        <Input id="due_date" type="date" v-model="newTask.due_date" />
+      </div>
+      <DialogFooter>
+        <Button type="submit">Add Task</Button>
+      </DialogFooter>
+    </form>
+  </DialogContent>
+</Dialog>
     <!-- Edit Project Dialog -->
     <Dialog v-model:open="isEditDialogOpen">
       <DialogContent>

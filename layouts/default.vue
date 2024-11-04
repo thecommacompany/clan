@@ -15,13 +15,13 @@ let pwaOpen = ref(true);
   <div>
     <ClientOnly>
       <div  v-if="$pwa?.showInstallPrompt && !$pwa?.offlineReady && !$pwa?.needRefresh"
-                class="pwa-toast flex justify-center items-center" role="alert">
+                class="pwa-toast flex justify-center items-center fixed bottom-0 bg-white" role="alert">
         <Dialog v-model:open="pwaOpen" class="max-w-md w-full">
         
           <DialogHeader>
             <DialogTitle>Install Clan</DialogTitle>
             <DialogDescription>
-              Install Clan to use offline functionality.
+              Install Clan for better offline functionality.
             </DialogDescription>
             </DialogHeader>
            <DialogFooter>

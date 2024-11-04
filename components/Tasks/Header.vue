@@ -4,8 +4,8 @@ import { useTasks } from "@/composables/useTasks";
 import type {Task} from "@/types/task";
 import type {User} from "@/types/user";
 import UserSelector from "@/components/Tasks/UserSelector.vue";
-
-
+import { useProjectStore } from "@/stores/project";
+const projectStore = useProjectStore();
 const taskStatus = ref("pending");
 const taskShow = ref("all");
 const isDialogOpen = ref(false);
@@ -19,7 +19,7 @@ const newTask = ref<Partial<Task>>({
   due_date: "",
   project:""
 });
-
+const { isPending: isProjectsLoading, isError: isProjectsError, error: projectsError } = useProjects()
 const { addTask } = useTasks();
 
 const handleAddTask = async () => {
@@ -108,6 +108,24 @@ const formatDate = (date: string | null) => {
               <Label for="due_date">Due Date</Label>
               <Input id="due_date" type="date" v-model="newTask.due_date" />
             </div>
+            <div>
+              <Label for="project">Project</Label>
+              <Select v-model="newTask.project">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                 
+                  <SelectItem
+                    v-for="project in projectStore.getProjects"
+                    :key="project.$id"
+                    :value="project.$id"
+                  >
+                    {{ project.title }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <DialogFooter>
               <Button type="submit">Add Task</Button>
             </DialogFooter>
@@ -115,6 +133,7 @@ const formatDate = (date: string | null) => {
         </DialogContent>
       </Dialog>
     </div>
+
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
         <Select v-model="taskStatus">

@@ -6,6 +6,6 @@ export interface Task {
   parent_task_id: string | null;
   assigned_to: string[];
   completed: boolean;
-  project: string|null;
+  project: string;
   due_date: string;
 }

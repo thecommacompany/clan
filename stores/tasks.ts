@@ -1,6 +1,6 @@
 import { defineStore, acceptHMRUpdate } from "pinia";
 import type { Task } from "@/types/task";
-
+import type { TaskWithProjectData } from "@/types/task";
 
 function formatDate(date: string) {
   return new Date(date).toISOString().split("T")[0];
@@ -9,21 +9,21 @@ function formatDate(date: string) {
 
 export const useTaskStore = defineStore("task", {
   state: () => ({
-    tasks: [] as Task[],
-    task: null as Task | null
+    tasks: [] as TaskWithProjectData[],
+    task: null as TaskWithProjectData | null
   }),
   actions: {
-    setTasks(tasks: Task[]) {
+    setTasks(tasks: TaskWithProjectData[]) {
       this.tasks = tasks;
     },
-    setTask(task: Task) {
+    setTask(task: TaskWithProjectData) {
       const fromattedTask = {...task, due_date: formatDate(task.due_date)}
       this.task = fromattedTask;
     },
     clearTasks() {
       this.tasks = [];
     },
-    updateTasks(updatedTask: Task) {
+    updateTasks(updatedTask: TaskWithProjectData) {
       const index = this.tasks.findIndex(task => task.$id === updatedTask.$id);
       if (index !== -1) {
         this.tasks[index] = updatedTask;
@@ -32,7 +32,7 @@ export const useTaskStore = defineStore("task", {
     removeTask(taskId: string) {
       this.tasks = this.tasks.filter(task => task.$id !== taskId);
     },
-    addTask(newTask: Task) {
+    addTask(newTask: TaskWithProjectData) {
       this.tasks.push(newTask);
     },
   },

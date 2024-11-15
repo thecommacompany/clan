@@ -17,7 +17,7 @@ let pwaOpen = ref(true);
       <div  v-if="$pwa?.showInstallPrompt && !$pwa?.offlineReady && !$pwa?.needRefresh"
                 class="pwa-toast flex justify-center items-center fixed bottom-0 bg-white" role="alert">
         <Dialog v-model:open="pwaOpen" class="max-w-md w-full">
-        
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Install Clan</DialogTitle>
             <DialogDescription>
@@ -28,7 +28,7 @@ let pwaOpen = ref(true);
               <Button @click="$pwa.install()" label="Install"> Install </Button>
               <Button @click="$pwa.cancelInstall()" label="Cancel"> Cancel </Button>
           </DialogFooter>
-        
+        </DialogContent>
         </Dialog>
       </div>
     </ClientOnly>

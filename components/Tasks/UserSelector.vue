@@ -35,13 +35,13 @@
   
   // Check if a user is currently selected
   const isSelected = (user: User) => {
-    return selectedUsers.value.some((selectedUser) => selectedUser.$id === user.$id)
+    return selectedUsers.value.some((selectedUser) => selectedUser.userID === user.userID)
   }
   
   // Toggle user selection (add/remove from selectedUsers)
   const toggleUser = (user: User) => {
     const index = selectedUsers.value.findIndex(
-      (selectedUser) => selectedUser.$id === user.$id
+      (selectedUser) => selectedUser.userID === user.userID
     )
     
     if (index === -1) {
@@ -72,7 +72,7 @@
   
   // Watch for changes in selected users and emit IDs to parent
   watch(selectedUsers, (newValue) => {
-    emit('update:modelValue', newValue.map(user => user.$id))
+    emit('update:modelValue', newValue.map(user => user.userID))
   })
 </script>
 
@@ -117,7 +117,7 @@
                 <!-- List of users with checkboxes -->
                 <CommandItem
                   v-for="user in filteredUsers"
-                  :key="user.$id"
+                  :key="user.userID"
                   :value="user"
                   @select="toggleUser(user)"
                 >
@@ -136,5 +136,3 @@
     </Popover>
   </div>
 </template>
-  
-  

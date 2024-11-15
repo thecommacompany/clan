@@ -6,5 +6,6 @@ export interface Transaction {
     type: 'internal' | 'external'
     user: string
     debit_credit: 'debit' | 'credit'
-    project: string
+    project: string,
+    $createdAt: string
   }

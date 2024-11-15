@@ -17,6 +17,17 @@ const { isPending, isError, error } = useProjects();
     </template>
     
     <template v-else>
+      <Breadcrumb class="mb-4 p-3">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <NuxtLink href="/">Home</NuxtLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Project</BreadcrumbPage> 
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
       <ProjectsHeader />
       <div class="p-3 flex flex-wrap gap-4">
         <ProjectsProject

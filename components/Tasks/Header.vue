@@ -1,46 +1,85 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useTasks } from "@/composables/useTasks";
-import type {Task} from "@/types/task";
-import type {User} from "@/types/user";
+import type { Task } from "@/types/task";
+import type { User } from "@/types/user";
 import UserSelector from "@/components/Tasks/UserSelector.vue";
 import { useProjectStore } from "@/stores/project";
+import { createTaskSchema, TaskStatus, TaskPriority } from "@/schemas/task";
+import type { CreateTask } from "@/schemas/task";
+import { useProjects } from "@/composables/useProjects";
+import { ZodError } from "zod";
+
 const projectStore = useProjectStore();
 const taskStatus = ref("pending");
 const taskShow = ref("all");
 const isDialogOpen = ref(false);
 let selectedUsers = ref<User[]>([]);
-const newTask = ref<Partial<Task>>({
+const validationErrors = ref<Record<string, string>>({});
+
+const newTask = ref<CreateTask>({
   title: "",
-  status: "todo",
-  priority: "medium",
+  status: TaskStatus.TODO,
+  priority: TaskPriority.MEDIUM,
   assigned_to: [],
   completed: false,
   due_date: "",
-  project:""
+  project: "",
+  parent_task_id: null
 });
-const { isPending: isProjectsLoading, isError: isProjectsError, error: projectsError } = useProjects()
+
+const { isPending: isProjectsLoading, isError: isProjectsError, error: projectsError } = useProjects();
 const { addTask } = useTasks();
 
+// Fetch projects when component mounts
+
+
+const validateTask = () => {
+  try {
+    createTaskSchema.parse(newTask.value);
+    validationErrors.value = {};
+    return true;
+  } catch (error) {
+    // check if error is zod error
+    if (error instanceof ZodError) {
+      validationErrors.value = error.errors.reduce<Record<string, string>>((acc, curr) => {
+        acc[curr.path[0]] = curr.message;
+        return acc;
+      }, {});
+    }
+    return false;
+  }
+};
+
 const handleAddTask = async () => {
-if (!newTask.value.assigned_to) {
+  if (!validateTask()) {
+    return;
+  }
+
+  if (!newTask.value.assigned_to) {
     newTask.value.assigned_to = [];
-}
-selectedUsers.value.forEach((user) => {
-    newTask.value.assigned_to!.push(user.$id);
+  }
+  
+  selectedUsers.value.forEach((user) => {
+    newTask.value.assigned_to!.push(user.userID);
   });
 
-await addTask(newTask.value);
+
+
+  await addTask(newTask.value);
+
   isDialogOpen.value = false;
   newTask.value = {
     title: "",
-    status: "todo",
-    priority: "medium",
+    status: TaskStatus.TODO,
+    priority: TaskPriority.MEDIUM,
     assigned_to: [],
     completed: false,
     due_date: "",
     project: "",
+    parent_task_id: null
   };
+  selectedUsers.value = [];
 };
 
 const formatDate = (date: string | null) => {
@@ -73,6 +112,7 @@ const formatDate = (date: string | null) => {
             <div>
               <Label for="title">Title</Label>
               <Input id="title" v-model="newTask.title" required />
+              <div v-if="validationErrors.title" class="text-red-500">{{ validationErrors.title }}</div>
             </div>
             <div>
               <Label for="status">Status</Label>
@@ -81,9 +121,12 @@ const formatDate = (date: string | null) => {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>Status</SelectLabel>
+                    <SelectItem value="todo">To Do</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -94,19 +137,23 @@ const formatDate = (date: string | null) => {
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectGroup>
+                    <SelectLabel>Priority</SelectLabel>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label for="assigned_to">Assigned To</Label>
-<UserSelector v-model="selectedUsers" />
+              <UserSelector v-model="selectedUsers" />
             </div>
             <div>
               <Label for="due_date">Due Date</Label>
               <Input id="due_date" type="date" v-model="newTask.due_date" />
+              <div v-if="validationErrors.due_date" class="text-red-500">{{ validationErrors.due_date }}</div>
             </div>
             <div>
               <Label for="project">Project</Label>
@@ -115,7 +162,6 @@ const formatDate = (date: string | null) => {
                   <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                 
                   <SelectItem
                     v-for="project in projectStore.getProjects"
                     :key="project.$id"
@@ -125,6 +171,7 @@ const formatDate = (date: string | null) => {
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <div v-if="validationErrors.project" class="text-red-500">{{ validationErrors.project }}</div>
             </div>
             <DialogFooter>
               <Button type="submit">Add Task</Button>

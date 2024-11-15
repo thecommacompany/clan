@@ -6,9 +6,10 @@ import { useUserDatabase } from "@/composables/useUserDatabase";
 import { useUserStore } from "@/stores/user";
 import UserSelector from "@/components/Tasks/UserSelector.vue";
 import { useTaskStore } from "@/stores/tasks";
-import type { Task } from "@/types/task";
-
-
+import type { Task,TaskWithProjectData } from "@/types/task";
+import { updateTaskSchema, TaskStatus, TaskPriority } from "@/schemas/task";
+import type { UpdateTask } from "@/schemas/task";
+import {ZodError} from "zod"
 // Initialize composables and stores
 const route = useRoute();
 const router = useRouter();
@@ -17,9 +18,10 @@ const { fetchUser } = useUserDatabase();
 const userStore = useUserStore();
 
 // Reactive references
-
 const isEditing = ref(false);
-const editedTask = ref({
+const validationErrors = ref<Record<string, string>>({});
+    const editedTask = ref({
+    $id: "",
     title: "",
     status: "todo",
     priority: "medium",
@@ -34,6 +36,7 @@ const selectedUsers = ref<User[]>([]);
 const fetchedUsers = computed(() => userStore.getFetchedUsers);
 const taskStore = useTaskStore();
 let task = computed(() => taskStore.getTask);
+
 // Fetch task data and assigned users
 const fetchTaskData = async () => {
     try {
@@ -44,25 +47,18 @@ const fetchTaskData = async () => {
             throw new Error('Task not found');
         }
 
-        // task.value = {
-        //     $id: fetchedTask.$id,
-        //     title: fetchedTask.title,
-        //     status: fetchedTask.status,
-        //     priority: fetchedTask.priority,
-        //     parent_task_id: fetchedTask.parent_task_id || null,
-        //     assigned_to: fetchedTask.assigned_to || [],
-        //     completed: fetchedTask.completed || false,
-        //     project: fetchedTask.project || null,
-        //     due_date:""
-        // };
-        
-        // // Format task data for editing
-        // editedTask.value = {
-        //     ...fetchedTask,
-        //     due_date: fetchedTask.due_date 
-        //         ? new Date(fetchedTask.due_date).toISOString().split("T")[0]
-        //         : ""
-        // };
+        // Format task data for editing
+        editedTask.value = {
+            title: task.value?.title,
+            status: task.value?.status,
+            priority: task.value?.priority,
+            assigned_to: task.value?.assigned_to,
+            completed: task.value?.completed,
+            project: task.value?.project?.$id || "",
+            due_date: task.value?.due_date 
+                ? new Date(task.value.due_date).toISOString().split("T")[0]
+                : ""
+        };
 
         // Fetch and set assigned users
         if (task.value?.assigned_to) {
@@ -86,17 +82,46 @@ const fetchTaskData = async () => {
     }
 };
 
+const validateTask = () => {
+  try {
+    updateTaskSchema.parse(editedTask.value);
+    validationErrors.value = {};
+    return true;
+  } catch (error) {
+//  check if error is zod error
+    if (error instanceof ZodError) {
+      validationErrors.value = error.errors.reduce<Record<string, string>>((acc, curr) => {
+        acc[curr.path[0]] = curr.message;
+        return acc;
+      }, {});
+    }
+    return false;
+  }
+};
+
 // Task operations
 const handleUpdateTask = async () => {
-    if (!editedTask.value || !task.value) return;
+    if (!validateTask()) {
+        return;
+    }
 
     try {
+        if (!editedTask.value.assigned_to) {
+            editedTask.value.assigned_to = [];
+        }
+        
+        selectedUsers.value.forEach((user) => {
+            editedTask.value.assigned_to!.push(user.userID);
+        });
+
         const updatedTaskData = {
             ...editedTask.value,
             assigned_to: selectedUsers.value.map((user: User) => user.$id)
         };
 
-        const updatedTask = await updateTask(task.value.$id, updatedTaskData);
+        if(task.value){
+            const updatedTask = await updateTask(task.value.$id, updatedTaskData);
+        }
         // task.value = updatedTask;
         isEditing.value = false;
     } catch (error) {
@@ -127,17 +152,41 @@ const handleToggleCompletion = async () => {
 
 const startEditing = () => {
     isEditing.value = true;
+    editedTask.value.due_date = task.value?.due_date
+        ? new Date(task.value.due_date).toISOString().split("T")[0]
+        : "";
     fetchTaskData();
 };
 
 // Initialize component
 onMounted(fetchTaskData);
+// url params
+const fromProject = route.query.fromProject;
 </script>
 
 <template>
     <div class="p-2">
         <!-- Breadcrumb Navigation -->
-        <Breadcrumb class="mb-4">
+        <Breadcrumb class="mb-4" v-if="fromProject">
+            <BreadcrumbList>
+                <BreadcrumbItem>
+                    <NuxtLink href="/">Home</NuxtLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                    <NuxtLink href="/projects">Projects</NuxtLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                    <NuxtLink :href="`/projects/${task?.project.$id}`">{{task?.project.title || "Loading..."}}</NuxtLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                    <BreadcrumbPage>{{ task?.title || "Loading..." }}</BreadcrumbPage>
+                </BreadcrumbItem>
+            </BreadcrumbList>
+        </Breadcrumb>
+        <Breadcrumb class="mb-4" v-else>
             <BreadcrumbList>
                 <BreadcrumbItem>
                     <NuxtLink href="/">Home</NuxtLink>
@@ -152,7 +201,7 @@ onMounted(fetchTaskData);
                 </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>
-
+     
         <!-- Task Detail Card -->
         <div v-if="task" class="max-w-2xl mx-auto mt-8 p-6">
             <Card>
@@ -168,12 +217,16 @@ onMounted(fetchTaskData);
                             <Badge>{{ task.priority }}</Badge>
                         </div>
                         <p>
-                            <strong>Assigned to:</strong>
+                            <strong>Assigned to: </strong>
                             {{ selectedUsers.map((user: User) => user.Name).join(", ") || "Unassigned" }}
                         </p>
                         <p>
-                            <strong>Due Date:</strong>
+                            <strong>Due Date: </strong>
                             {{ task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date" }}
+                        </p>
+                        <p>
+                            <strong>Project: </strong>
+                           <NuxtLink :to="`/projects/${task.project.$id}`" class="text-blue-500 font-bold hover:underline">{{task.project.title || "Loading..."}}</NuxtLink>
                         </p>
                         <div class="flex items-center space-x-2">
                             <Checkbox
@@ -189,6 +242,7 @@ onMounted(fetchTaskData);
                         <div>
                             <Label for="title">Title</Label>
                             <Input id="title" v-model="editedTask.title" required />
+                            <p v-if="validationErrors.title" class="text-red-500">{{ validationErrors.title }}</p>
                         </div>
                         
                         <div>
@@ -203,6 +257,7 @@ onMounted(fetchTaskData);
                                     <SelectItem value="done">Done</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <p v-if="validationErrors.status" class="text-red-500">{{ validationErrors.status }}</p>
                         </div>
 
                         <div>
@@ -217,6 +272,7 @@ onMounted(fetchTaskData);
                                     <SelectItem value="high">High</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <p v-if="validationErrors.priority" class="text-red-500">{{ validationErrors.priority }}</p>
                         </div>
 
                         <div>
@@ -231,6 +287,7 @@ onMounted(fetchTaskData);
                                 type="date"
                                 v-model="editedTask.due_date"
                             />
+                            <p v-if="validationErrors.due_date" class="text-red-500">{{ validationErrors.due_date }}</p>
                         </div>
                     </form>
                 </CardContent>

@@ -6,10 +6,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     if (to.path != "/login") {
       try {
         const res = await account.get();
+      
         if(res.$id) {
-          console.log(res.$id)
           const authStore = useAuthStore();
+
           authStore.sessionID = res.$id
+          
         }
         return;
       } catch (err) {

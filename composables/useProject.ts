@@ -1,13 +1,13 @@
 // composables/useProject.ts
 import type { Project } from "@/types/project";
-import type { Task } from "@/types/task";
+import type { Task, TaskWithProjectData } from "@/types/task";
 import { useQuery } from "@tanstack/vue-query";
 import { useProjectStore } from "@/stores/project";
 import { useTaskStore } from "@/stores/tasks";
 import type {Models} from "appwrite"
 
 
-function parseTask(task: Models.Document): Task {
+function parseTask(task: Models.Document): TaskWithProjectData {
   return {
     $id: task.$id,
     title: task.title,
@@ -45,7 +45,7 @@ export const useProject = (projectId: string) => {
   const projectStore = useProjectStore();
   const taskStore = useTaskStore();
 
-  const fetchProjectTasks = async (projectId: string): Promise<Task[]> => {
+  const fetchProjectTasks = async (projectId: string): Promise<TaskWithProjectData[]> => {
     const response = await database.listDocuments(
       config.public.databaseId,
       config.public.tasksCollectionId,
@@ -56,7 +56,7 @@ export const useProject = (projectId: string) => {
     return tasks;
   };
 
-  const calculateProjectStats = (tasks: Task[]) => {
+  const calculateProjectStats = (tasks: TaskWithProjectData[]) => {
     const totalTasks = tasks.length;
     const completedTasks = tasks.filter(
       (task) => task.completed === true,

@@ -65,7 +65,6 @@ export const useProjects = () => {
         const projectsWithStats = await Promise.all(
           response.documents.map(async (project) => {
             const taskResponse = await fetchProjectTasks(project.$id) as Models.Document[]
-            console.log(taskResponse)
             return {
               ...project,
               stats: calculateProjectStats(taskResponse)

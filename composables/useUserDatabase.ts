@@ -1,5 +1,6 @@
 import { useUserStore } from '~/stores/user'
 import type { Models } from 'appwrite'
+
 export interface User {
   $id: string
   Name: string
@@ -21,7 +22,7 @@ function parseUser(user: Models.Document): User {
 
 export function useUserDatabase() {
   const config = useRuntimeConfig()
-  const { database } = useAppwrite()
+  const { database, Query } = useAppwrite()
   const userStore = useUserStore()
 
   const fetchUsers = async () => {
@@ -40,12 +41,13 @@ export function useUserDatabase() {
   }
 const fetchUser = async (userId: string) => {
     try {
-      const response = await database.getDocument(
+      const response = await database.listDocuments(
         config.public.databaseId,
         config.public.usersCollectionId,
-        userId
-      ) as Models.Document
-      const user = parseUser(response)
+        [Query.equal('userID', userId)]
+      ) as Models.DocumentList<Models.Document>
+      
+      const user = response.documents[0] && parseUser(response.documents[0])
       
       return user
     } catch (error) {

@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/vue-query'
 import { useTaskStore } from '@/stores/tasks'
 import { useAppwrite } from '#imports'
-import type { Task } from '@/types/task'
+import type { Task,TaskWithProjectData } from '@/types/task'
 import type { Models  } from 'appwrite'
 
+
 // function parse task 
-function parseTask(task: Models.Document): Task {
+function parseTask(task: Models.Document): TaskWithProjectData {
+  
   return {
     $id: task.$id,
     title: task.title,
@@ -23,7 +25,6 @@ export const useTasks = () => {
   const config = useRuntimeConfig()
   const { database } = useAppwrite()
   const taskStore = useTaskStore()
-
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
@@ -32,9 +33,8 @@ export const useTasks = () => {
           config.public.databaseId,
           config.public.tasksCollectionId
         ) as Models.DocumentList<Models.Document>
-
         const tasks = response.documents.map(parseTask)
-        taskStore.setTasks(tasks as Task[])
+        taskStore.setTasks(tasks as TaskWithProjectData[])
         return tasks
       } catch (error) {
         throw createError({
@@ -99,7 +99,7 @@ export const useTasks = () => {
     }
   }
 
-  const toggleTaskCompletion = async (task: Task) => {
+  const toggleTaskCompletion = async (task: TaskWithProjectData) => {
     updateTask(task.$id, { completed: !task.completed })
     return true
   }

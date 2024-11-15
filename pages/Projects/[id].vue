@@ -133,6 +133,7 @@ const handleAddTask = async () => {
     </Breadcrumb>
 
     <div class="max-w-7xl mx-auto">
+    
       <template v-if="isPending">
         <div>Loading...</div>
       </template>
@@ -157,15 +158,15 @@ const handleAddTask = async () => {
             <Tabs default-value="project">
               <TabsList>
                 <TabsTrigger value="project">Project Details</TabsTrigger>
-                <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                <TabsTrigger value="tasks">Tasks ({{ projectStore.project.stats?.totalTasks }})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="project">
                 <div class="space-y-2">
                   <ProjectsDetail label="Category" :value="projectStore.project.category" />
                   <ProjectsDetail label="Budget" :value="String(projectStore.project.Budget)" />
-                  <ProjectsDetail label="Due Date" :value="projectStore.project.due_date" />
-                  <ProjectsDetail label="Start Date" :value="projectStore.project.start_date" />
+                  <ProjectsDetail label="Due Date" :value="new Date(projectStore.project.due_date).toLocaleDateString()" />
+                  <ProjectsDetail label="Start Date" :value="new Date(projectStore.project.start_date).toLocaleDateString()" />
                   <ProjectsDetail label="Description" :value="projectStore.project.description" />
                 </div>
               </TabsContent>
@@ -204,7 +205,7 @@ const handleAddTask = async () => {
                 </div>
 
                 <div>
-                  <TasksList :tasks="projectStore.projectTasks" />
+                  <TasksList :tasks="projectStore.projectTasks" :fromProject="true" />
                 </div>
               </TabsContent>
             </Tabs>

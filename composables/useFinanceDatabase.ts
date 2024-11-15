@@ -10,7 +10,8 @@ function parseTransaction(transaction: Models.Document): Transaction {
     type: transaction.type,
     user: transaction.user,
     debit_credit: transaction.debit_credit,
-    project: transaction.project
+    project: transaction.project,
+    $createdAt: transaction.$createdAt
   }
 }
 export const useFinanceDatabase = () => {

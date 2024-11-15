@@ -134,6 +134,17 @@ const resetNewTransaction = () => {
 
 <template>
   <div class="container mx-auto p-4">
+    <Breadcrumb class="mb-4">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <NuxtLink href="/">Home</NuxtLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Finances</BreadcrumbPage> 
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
     <h1 class="text-2xl font-bold mb-4">Finances</h1>
     
     <!-- Analytics Section -->
@@ -268,7 +279,7 @@ const resetNewTransaction = () => {
                   <SelectItem
                     v-for="user in userStore.getUsers"
                     :key="user.$id"
-                    :value="user.$id"
+                    :value="user.userID"
                   >
                     {{ user.Name }}
                   </SelectItem>

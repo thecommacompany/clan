@@ -4,6 +4,9 @@ import { useTasks } from "@/composables/useTasks";
 
 const taskStore = useTaskStore();
 const { isPending, isError, error } = useTasks();
+const { fetchUser } = useUserDatabase();
+
+
 </script>
 
 <template>
@@ -17,6 +20,17 @@ const { isPending, isError, error } = useTasks();
     </template>
     
     <template v-else>
+      <Breadcrumb class="mb-4 p-3">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <NuxtLink href="/">Home</NuxtLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Tasks</BreadcrumbPage> 
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
       <TasksHeader />
       <div class="p-3">
         <TasksList :tasks="taskStore.tasks" />
